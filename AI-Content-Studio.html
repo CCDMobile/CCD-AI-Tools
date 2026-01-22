@@ -171,10 +171,20 @@
         
         .checkbox-group label {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 8px;
             font-weight: normal;
             cursor: pointer;
+            line-height: 1.4;
+        }
+        
+        .checkbox-group label input[type="checkbox"] {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        
+        .checkbox-group label span {
+            flex: 1;
         }
         
         .stats-grid {
@@ -726,27 +736,27 @@
                         <div class="checkbox-group">
                             <label>
                                 <input type="checkbox" id="channelEtsy" checked>
-                                Etsy (Artisan, Detailed)
+                                <span>Etsy (Artisan, Detailed)</span>
                             </label>
                             <label>
                                 <input type="checkbox" id="channelWix" checked>
-                                Wix (Concise, Value)
+                                <span>Wix (Concise, Value)</span>
                             </label>
                             <label>
                                 <input type="checkbox" id="channelWayfair">
-                                Wayfair (Specs, Practical)
+                                <span>Wayfair (Specs, Practical)</span>
                             </label>
                             <label>
                                 <input type="checkbox" id="channelPinterest" checked>
-                                📌 Pinterest (Visual, Inspirational)
+                                <span>📌 Pinterest (Visual, Inspirational)</span>
                             </label>
                             <label>
                                 <input type="checkbox" id="channelInstagram" checked>
-                                📸 Instagram (Engaging, Hashtags)
+                                <span>📸 Instagram (Engaging, Hashtags)</span>
                             </label>
                             <label>
                                 <input type="checkbox" id="channelFacebook">
-                                👥 Facebook (Conversational)
+                                <span>👥 Facebook (Conversational)</span>
                             </label>
                         </div>
                     </div>
