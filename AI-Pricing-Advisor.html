@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Pricing Advisor v5.0</title>
+    <title>AI Pricing Advisor</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -32,22 +32,18 @@
             gap: 12px;
         }
         
-        .version {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            color: white;
+        .cache-indicator {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
             padding: 4px 12px;
             border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            margin-left: auto;
         }
         
-        .new-badge {
+        .cache-indicator.fresh {
             background: rgba(16, 185, 129, 0.2);
             color: #6ee7b7;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
         }
         
         .main-layout {
@@ -77,6 +73,34 @@
             font-size: 1.1rem;
         }
         
+        .api-key-section {
+            margin-bottom: 16px;
+        }
+        
+        .api-key-status {
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            color: #10b981;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            display: none;
+        }
+        
+        .api-key-status.active { display: block; }
+        
+        .api-key-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #f1f5f9;
+            font-size: 0.95rem;
+            font-family: monospace;
+        }
+        
         .connect-btn {
             background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
@@ -88,6 +112,7 @@
             cursor: pointer;
             transition: all 0.3s;
             width: 100%;
+            margin-top: 8px;
         }
         
         .connect-btn:hover {
@@ -118,261 +143,439 @@
             font-size: 0.95rem;
         }
         
-        .info-text {
-            color: #64748b;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        
+        .stat-label {
             font-size: 0.8rem;
+            color: #94a3b8;
             margin-top: 4px;
         }
         
-        .status {
-            margin-top: 12px;
-            padding: 12px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 8px;
-            color: #10b981;
-            font-size: 0.9rem;
-            display: none;
-        }
-        
-        .status.active { display: block; }
-        
-        /* VIEW TOGGLE */
-        .view-toggle {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 4px;
-            border-radius: 8px;
-        }
-        
-        .view-btn {
-            flex: 1;
-            padding: 8px;
-            background: transparent;
+        .analyze-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
             border: none;
-            color: #94a3b8;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        
-        .view-btn.active {
-            background: rgba(99, 102, 241, 0.3);
-            color: #a5b4fc;
-        }
-        
-        /* LIST VIEW */
-        .list-view {
-            display: none;
-        }
-        
-        .list-view.active {
-            display: block;
-        }
-        
-        .list-header {
-            display: grid;
-            grid-template-columns: 40px 120px 1fr 100px 120px 80px 80px 60px;
-            gap: 12px;
-            padding: 12px 16px;
-            background: rgba(15, 23, 42, 0.6);
+            padding: 14px;
             border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
-        
-        .list-item {
-            display: grid;
-            grid-template-columns: 40px 120px 1fr 100px 120px 80px 80px 60px;
-            gap: 12px;
-            padding: 12px 16px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #334155;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .list-item:hover {
-            background: rgba(30, 41, 59, 1);
-            border-color: #6366f1;
-        }
-        
-        .list-item.expanded {
-            grid-template-columns: 1fr;
-        }
-        
-        .priority-high { border-left: 4px solid #ef4444; }
-        .priority-medium { border-left: 4px solid #f59e0b; }
-        .priority-low { border-left: 4px solid #64748b; }
-        
-        .expand-icon {
-            font-size: 1.2rem;
-            color: #6366f1;
-            transition: transform 0.3s;
-        }
-        
-        .list-item.expanded .expand-icon {
-            transform: rotate(90deg);
-        }
-        
-        /* CARD VIEW */
-        .card-view {
-            display: none;
-        }
-        
-        .card-view.active {
-            display: block;
-        }
-        
-        .recommendation-card {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 16px;
-        }
-        
-        /* BULK ACTIONS */
-        .bulk-actions {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            padding: 12px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #334155;
-            border-radius: 8px;
-        }
-        
-        .bulk-btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
+            width: 100%;
             transition: all 0.3s;
-            font-size: 0.9rem;
+            margin-top: 20px;
         }
         
-        .bulk-btn-accept {
-            background: #10b981;
-            color: white;
-        }
-        
-        .bulk-btn-reject {
-            background: #ef4444;
-            color: white;
-        }
-        
-        .bulk-btn-export {
-            background: #6366f1;
-            color: white;
-        }
-        
-        .bulk-btn-future {
-            background: #475569;
-            color: #94a3b8;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        
-        .bulk-btn:not(.bulk-btn-future):hover {
+        .analyze-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
         }
         
-        /* GLOBAL COMPETITORS */
-        .global-competitors {
-            margin-top: 12px;
+        .analyze-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
-        .competitor-url-list {
+        .global-competitors-panel {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .competitor-url-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .competitor-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-top: 8px;
+            gap: 6px;
         }
         
-        .competitor-url-item {
+        .competitor-item {
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
             align-items: center;
-            padding: 8px;
             background: rgba(15, 23, 42, 0.6);
+            padding: 8px 12px;
             border-radius: 6px;
+            font-size: 0.85rem;
         }
         
-        .competitor-url-item input {
+        .competitor-item a {
+            color: #a5b4fc;
+            text-decoration: none;
             flex: 1;
-            background: transparent;
-            border: none;
-            color: #f1f5f9;
-            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .remove-btn {
-            padding: 4px 8px;
             background: #ef4444;
             color: white;
             border: none;
+            padding: 4px 8px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.75rem;
         }
         
-        .add-competitor-btn {
-            padding: 8px;
-            background: rgba(99, 102, 241, 0.2);
-            color: #a5b4fc;
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-top: 8px;
+        .bulk-actions {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 12px;
         }
         
-        /* SOURCE PANEL */
-        .source-panel {
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.3);
+        .bulk-actions.active {
+            display: flex;
+        }
+        
+        .bulk-actions span {
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+        
+        .bulk-actions button {
+            padding: 8px 16px;
             border-radius: 8px;
-            padding: 12px;
-            margin-top: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
         }
         
-        .source-panel h5 {
-            color: #a5b4fc;
+        .btn-accept { background: #10b981; color: white; }
+        .btn-reject { background: #ef4444; color: white; }
+        .btn-export { background: #6366f1; color: white; }
+        .btn-clear { background: #f59e0b; color: white; }
+        .btn-future {
+            background: rgba(100, 116, 139, 0.3);
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .list-table {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .list-header {
+            display: grid;
+            grid-template-columns: 40px 100px 2fr 120px 120px 100px 100px 40px;
+            gap: 12px;
+            padding: 16px 20px;
+            background: rgba(15, 23, 42, 0.6);
+            border-bottom: 1px solid #334155;
+            font-weight: 600;
             font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+        
+        .list-row {
+            display: grid;
+            grid-template-columns: 40px 100px 2fr 120px 120px 100px 100px 40px;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .list-row:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .list-row.priority-high {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .list-row.priority-medium {
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .list-row.priority-low {
+            border-left: 4px solid #64748b;
+        }
+        
+        .expand-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #6366f1;
+        }
+        
+        .price-change {
+            font-weight: 600;
+        }
+        
+        .price-change.positive {
+            color: #10b981;
+        }
+        
+        .price-change.negative {
+            color: #ef4444;
+        }
+        
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        
+        .priority-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+        
+        .priority-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+        
+        .priority-low {
+            background: rgba(100, 116, 139, 0.2);
+            color: #cbd5e1;
+        }
+        
+        .expanded-card {
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.4);
+            border-top: 1px solid #334155;
+            display: none;
+        }
+        
+        .expanded-card.active {
+            display: block;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 24px;
+        }
+        
+        .product-info h4 {
+            font-size: 1.3rem;
+            color: #f1f5f9;
             margin-bottom: 8px;
         }
         
-        .source-item {
+        .product-info .sku {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        
+        .warning-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid #ef4444;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #fca5a5;
+        }
+        
+        .pricing-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 12px;
+        }
+        
+        .price-column h5 {
+            color: #94a3b8;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+        
+        .price-row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .price-label {
+            color: #cbd5e1;
+        }
+        
+        .price-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .arrow {
+            font-size: 2rem;
+            color: #6366f1;
+        }
+        
+        .analysis-section {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .analysis-section h5 {
+            color: #a5b4fc;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+        
+        .platform-fees-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .platform-fee-box {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .platform-fee-box.best {
+            border: 2px solid #10b981;
+        }
+        
+        .platform-name {
+            color: #cbd5e1;
             font-size: 0.85rem;
-            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            margin-bottom: 4px;
         }
         
-        .source-item:last-child {
-            border-bottom: none;
-        }
-        
-        .source-label {
-            color: #94a3b8;
-        }
-        
-        .source-value {
+        .platform-margin {
+            font-size: 1.2rem;
+            font-weight: 700;
             color: #f1f5f9;
-            font-weight: 600;
+        }
+        
+        .seasonal-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .velocity-warning {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .psych-pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .psych-box {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .psych-box.optimized {
+            border: 2px solid #10b981;
+        }
+        
+        .insight-box {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid #6366f1;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .insight-box h5 {
+            color: #a5b4fc;
+            margin-bottom: 8px;
+        }
+        
+        .insight-box p {
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+        
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .metric-small {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .metric-small .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        
+        .metric-small .label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         
         .btn {
@@ -384,13 +587,14 @@
             transition: all 0.3s;
         }
         
-        .btn-accept { background: #10b981; color: white; }
-        .btn-reject { background: #ef4444; color: white; }
         .btn-modify { background: #f59e0b; color: white; }
-        .btn-copy { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
-        .btn-future { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
+        .btn-copy {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
         
-        .btn:not(.btn-future):hover {
+        .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
@@ -416,12 +620,6 @@
         }
         
         .hidden { display: none; }
-        
-        .checkbox {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
@@ -429,69 +627,34 @@
         <div class="header">
             <h1>
                 🎯 AI Pricing Advisor
-                <span class="version">v5.0</span>
-                <span class="new-badge">LIST VIEW</span>
+                <span class="cache-indicator" id="cacheIndicator" style="display: none;"></span>
             </h1>
-            <p>Scalable pricing analysis with list view, global competitors, bulk actions, and enhanced export. Built for 800+ products.</p>
+            <p style="color: #94a3b8; margin-top: 8px;">AI-powered pricing with platform fee analysis, seasonal intelligence, and inventory velocity tracking</p>
         </div>
         
         <div class="main-layout">
             <div class="sidebar">
                 <div class="panel">
-                    <h3>🔑 API Configuration</h3>
-                    <div class="filter-group">
-                        <label>Anthropic API Key</label>
-                        <input type="password" id="apiKeyInput" placeholder="sk-ant-xxxxx..." style="font-family: monospace;">
-                        <p class="info-text">Stored locally in browser</p>
+                    <h3>1️⃣ API Configuration</h3>
+                    <div class="api-key-section">
+                        <label style="display: block; color: #cbd5e1; font-size: 0.9rem; margin-bottom: 8px;">Anthropic API Key</label>
+                        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="sk-ant-...">
+                        <button class="connect-btn" onclick="saveApiKey()">💾 Save API Key</button>
+                        <div class="api-key-status" id="apiKeyStatus"></div>
                     </div>
-                    <button class="connect-btn" onclick="saveApiKey()" style="background: linear-gradient(135deg, #10b981, #059669);">
-                        💾 Save API Key
-                    </button>
-                    <div class="status" id="apiKeyStatus"></div>
                 </div>
                 
                 <div class="panel">
-                    <h3>1️⃣ Connect Data</h3>
+                    <h3>2️⃣ Connect Data</h3>
                     <button class="connect-btn" onclick="connectFile()">📁 Select MASTER.json</button>
-                    <div class="status" id="fileStatus"></div>
-                </div>
-                
-                <div class="panel" id="globalCompetitorsPanel" style="display: none;">
-                    <h3>🌍 Global Competitors <span class="new-badge">NEW!</span></h3>
-                    <p class="info-text" style="margin-bottom: 12px;">Add competitor URLs to apply across all products</p>
-                    
-                    <div class="competitor-url-list" id="globalCompetitorsList">
-                        <!-- Competitors added here -->
-                    </div>
-                    
-                    <button class="add-competitor-btn" onclick="addGlobalCompetitor()">+ Add Competitor URL</button>
-                    
-                    <div class="source-panel" style="margin-top: 16px;">
-                        <h5>📊 Data Sources</h5>
-                        <div class="source-item">
-                            <span class="source-label">Platform Fees:</span>
-                            <span class="source-value">Published rates</span>
-                        </div>
-                        <div class="source-item">
-                            <span class="source-label">Seasonal:</span>
-                            <span class="source-value">Category + Month</span>
-                        </div>
-                        <div class="source-item">
-                            <span class="source-label">Velocity:</span>
-                            <span class="source-value">Stock + Sales data</span>
-                        </div>
-                        <div class="source-item">
-                            <span class="source-label">Competitors:</span>
-                            <span class="source-value">Manual entry</span>
-                        </div>
-                    </div>
+                    <div class="api-key-status" id="fileStatus"></div>
                 </div>
                 
                 <div class="panel" id="optionsPanel" style="display: none;">
-                    <h3>2️⃣ Filter Products</h3>
+                    <h3>3️⃣ Filter Products</h3>
                     
                     <div class="filter-group">
-                        <label>Search</label>
+                        <label>Search Products</label>
                         <input type="text" id="searchBox" placeholder="Name or SKU..." oninput="updateProductList()">
                     </div>
                     
@@ -502,40 +665,60 @@
                         </select>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div style="text-align: center; padding: 12px; background: rgba(15, 23, 42, 0.6); border-radius: 8px;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #6366f1;" id="matchingCount">0</div>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">Matching</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="matchingCount">0</div>
+                            <div class="stat-label">Matching</div>
                         </div>
-                        <div style="text-align: center; padding: 12px; background: rgba(15, 23, 42, 0.6); border-radius: 8px;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #6366f1;" id="totalCount">0</div>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">Total</div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalCount">0</div>
+                            <div class="stat-label">Total</div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="panel" id="analysisPanel" style="display: none;">
-                    <h3>3️⃣ Analyze</h3>
+                    <h3>4️⃣ Analysis Options</h3>
                     
                     <div class="filter-group">
-                        <label>How many?</label>
-                        <input type="number" id="analyzeCount" value="10" min="1" max="100">
-                        <p class="info-text">Cost: ~$0.06 per product</p>
+                        <label>How many to analyze?</label>
+                        <input type="number" id="analyzeCount" value="5" min="1" max="100">
+                        <p style="color: #64748b; font-size: 0.8rem; margin-top: 4px;">Cost: ~$0.04 per product</p>
                     </div>
                     
                     <div class="filter-group">
                         <label>Target Margin</label>
                         <input type="number" id="targetMargin" value="40" min="20" max="80">
-                        <p class="info-text">Minimum margin %</p>
+                        <p style="color: #64748b; font-size: 0.8rem; margin-top: 4px;">Minimum margin %</p>
                     </div>
                     
-                    <button class="connect-btn" onclick="analyzeProducts()" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeProducts()" disabled>
                         🤖 Analyze Pricing
                     </button>
+                </div>
+                
+                <div class="panel" id="competitorsPanel" style="display: none;">
+                    <h3>🌐 Global Competitors</h3>
+                    <div class="global-competitors-panel">
+                        <div class="competitor-url-input">
+                            <input type="text" id="competitorUrl" placeholder="Competitor URL" style="flex: 1; background: rgba(15, 23, 42, 0.6); border: 1px solid #475569; border-radius: 6px; padding: 8px; color: #f1f5f9;">
+                            <button class="connect-btn" onclick="addGlobalCompetitor()" style="width: auto; padding: 8px 16px; margin: 0;">Add</button>
+                        </div>
+                        <div class="competitor-list" id="globalCompetitorList"></div>
+                    </div>
                 </div>
             </div>
             
             <div class="content-area">
+                <div class="bulk-actions" id="bulkActions">
+                    <span id="selectedCount">0 selected</span>
+                    <button class="btn-accept" onclick="bulkAccept()">✅ Accept Selected</button>
+                    <button class="btn-reject" onclick="bulkReject()">❌ Reject Selected</button>
+                    <button class="btn-export" onclick="exportAccepted()">📊 Export CSV</button>
+                    <button class="btn-clear" onclick="clearCache()">🗑️ Clear Cache</button>
+                    <button class="btn-future" disabled>💾 Update JSON (Soon)</button>
+                </div>
+                
                 <div id="resultsArea"></div>
             </div>
         </div>
@@ -546,33 +729,126 @@
         let fileHandle = null;
         let filteredProducts = [];
         let recommendations = [];
-        let globalCompetitors = [];
-        let viewMode = 'list'; // 'list' or 'card'
         let acceptedRecommendations = new Set();
-        
+        let globalCompetitors = [];
+        let apiKey = '';
         const WORKER_URL = 'https://cold-field-4bb6.psmith-925.workers.dev/';
         
-        // API Key Management
+        // Load saved data on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadApiKey();
+            loadGlobalCompetitors();
+            loadFromCache();
+        });
+        
+        function loadApiKey() {
+            const saved = localStorage.getItem('anthropic_api_key');
+            if (saved) {
+                apiKey = saved;
+                document.getElementById('apiKeyInput').value = saved;
+                document.getElementById('apiKeyStatus').textContent = '✅ API Key loaded';
+                document.getElementById('apiKeyStatus').classList.add('active');
+            }
+        }
+        
         function saveApiKey() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (!apiKey) {
-                alert('❌ Please enter an API key');
+            const input = document.getElementById('apiKeyInput').value.trim();
+            if (!input.startsWith('sk-ant-')) {
+                alert('Invalid API key format. Must start with sk-ant-');
                 return;
             }
-            if (!apiKey.startsWith('sk-ant-')) {
-                alert('⚠️ API key should start with "sk-ant-"');
-                return;
-            }
+            apiKey = input;
             localStorage.setItem('anthropic_api_key', apiKey);
-            document.getElementById('apiKeyStatus').textContent = '✅ API Key saved!';
+            document.getElementById('apiKeyStatus').textContent = '✅ API Key saved';
             document.getElementById('apiKeyStatus').classList.add('active');
         }
         
-        function getApiKey() {
-            return document.getElementById('apiKeyInput').value.trim() || localStorage.getItem('anthropic_api_key');
+        function loadGlobalCompetitors() {
+            const saved = localStorage.getItem('global_competitors');
+            if (saved) {
+                globalCompetitors = JSON.parse(saved);
+                updateCompetitorList();
+            }
         }
         
-        // File Connection
+        function addGlobalCompetitor() {
+            const url = document.getElementById('competitorUrl').value.trim();
+            if (!url) return;
+            
+            globalCompetitors.push(url);
+            localStorage.setItem('global_competitors', JSON.stringify(globalCompetitors));
+            document.getElementById('competitorUrl').value = '';
+            updateCompetitorList();
+        }
+        
+        function removeGlobalCompetitor(index) {
+            globalCompetitors.splice(index, 1);
+            localStorage.setItem('global_competitors', JSON.stringify(globalCompetitors));
+            updateCompetitorList();
+        }
+        
+        function updateCompetitorList() {
+            const list = document.getElementById('globalCompetitorList');
+            if (globalCompetitors.length === 0) {
+                list.innerHTML = '<p style="color: #94a3b8; font-size: 0.85rem;">No competitors added yet</p>';
+            } else {
+                list.innerHTML = globalCompetitors.map((url, i) => `
+                    <div class="competitor-item">
+                        <a href="${url}" target="_blank">${url}</a>
+                        <button class="remove-btn" onclick="removeGlobalCompetitor(${i})">×</button>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function saveToCache(data) {
+            const cacheData = {
+                data: data,
+                timestamp: Date.now(),
+                count: data.length,
+                accepted: Array.from(acceptedRecommendations)
+            };
+            localStorage.setItem('pricing_cache', JSON.stringify(cacheData));
+        }
+        
+        function loadFromCache() {
+            const cached = localStorage.getItem('pricing_cache');
+            if (!cached) return;
+            
+            const data = JSON.parse(cached);
+            const age = Date.now() - data.timestamp;
+            
+            // Cache valid for 7 days
+            if (age > 7 * 24 * 60 * 60 * 1000) {
+                localStorage.removeItem('pricing_cache');
+                return;
+            }
+            
+            recommendations = data.data;
+            acceptedRecommendations = new Set(data.accepted || []);
+            
+            // Show cache indicator
+            const hours = Math.floor(age / (1000 * 60 * 60));
+            const indicator = document.getElementById('cacheIndicator');
+            indicator.textContent = `📦 Loaded from cache (${hours}h old)`;
+            indicator.style.display = 'block';
+            
+            if (recommendations.length > 0) {
+                displayResults();
+            }
+        }
+        
+        function clearCache() {
+            if (!confirm('Clear all cached analysis results?')) return;
+            
+            localStorage.removeItem('pricing_cache');
+            recommendations = [];
+            acceptedRecommendations.clear();
+            document.getElementById('resultsArea').innerHTML = '';
+            document.getElementById('cacheIndicator').style.display = 'none';
+            alert('✅ Cache cleared! Analyze products to get fresh results.');
+        }
+        
         async function connectFile() {
             try {
                 [fileHandle] = await window.showOpenFilePicker({
@@ -589,18 +865,11 @@
                 }
                 
                 document.getElementById('fileStatus').textContent = 
-                    `✅ Connected - ${masterData.inventory.length} products loaded`;
+                    `✅ Connected - ${masterData.inventory.length} products`;
                 document.getElementById('fileStatus').classList.add('active');
-                document.getElementById('globalCompetitorsPanel').style.display = 'block';
                 document.getElementById('optionsPanel').style.display = 'block';
                 document.getElementById('analysisPanel').style.display = 'block';
-                
-                const savedKey = localStorage.getItem('anthropic_api_key');
-                if (savedKey) {
-                    document.getElementById('apiKeyInput').value = savedKey;
-                    document.getElementById('apiKeyStatus').textContent = '✅ API Key loaded';
-                    document.getElementById('apiKeyStatus').classList.add('active');
-                }
+                document.getElementById('competitorsPanel').style.display = 'block';
                 
                 populateFilters();
                 updateProductList();
@@ -635,378 +904,510 @@
             
             document.getElementById('matchingCount').textContent = filteredProducts.length;
             document.getElementById('totalCount').textContent = masterData.inventory.length;
+            document.getElementById('analyzeBtn').disabled = filteredProducts.length === 0 || !apiKey;
         }
         
-        // Global Competitors
-        function addGlobalCompetitor() {
-            const name = prompt('Competitor name (e.g., Wayfair, Etsy):');
-            if (!name) return;
-            
-            const url = prompt('Base URL (e.g., wayfair.com/search?keyword=):');
-            if (!url) return;
-            
-            globalCompetitors.push({ name, url });
-            renderGlobalCompetitors();
-        }
-        
-        function renderGlobalCompetitors() {
-            const list = document.getElementById('globalCompetitorsList');
-            list.innerHTML = globalCompetitors.map((comp, i) => `
-                <div class="competitor-url-item">
-                    <input type="text" value="${comp.name}" readonly>
-                    <input type="text" value="${comp.url}" readonly style="flex: 2;">
-                    <button class="remove-btn" onclick="removeGlobalCompetitor(${i})">×</button>
-                </div>
-            `).join('');
-        }
-        
-        function removeGlobalCompetitor(index) {
-            globalCompetitors.splice(index, 1);
-            renderGlobalCompetitors();
-        }
-        
-        // Analysis (simplified for this rebuild - keeping core v4 logic)
         async function analyzeProducts() {
-            const count = Math.min(parseInt(document.getElementById('analyzeCount').value) || 10, filteredProducts.length);
-            if (count === 0) return alert('No products selected.');
-            
-            const apiKey = getApiKey();
             if (!apiKey) {
-                alert('❌ API key required');
+                alert('Please enter and save your API key first.');
                 return;
             }
             
-            const cost = (count * 0.06).toFixed(2);
+            const count = Math.min(parseInt(document.getElementById('analyzeCount').value) || 5, filteredProducts.length);
+            if (count === 0) return alert('No products selected.');
+            
+            const cost = (count * 0.04).toFixed(2);
             if (!confirm(`Analyze ${count} products? Cost: ~$${cost}`)) return;
             
+            const targetMargin = parseInt(document.getElementById('targetMargin').value) || 40;
+            
             const resultsArea = document.getElementById('resultsArea');
-            resultsArea.innerHTML = '<div class="loading"><div class="spinner"></div><p>Analyzing...</p></div>';
+            resultsArea.innerHTML = '<div class="loading"><div class="spinner"></div><p>Analyzing with AI...</p></div>';
+            
+            // Clear cache indicator for fresh analysis
+            const indicator = document.getElementById('cacheIndicator');
+            indicator.textContent = '✨ Fresh analysis';
+            indicator.classList.add('fresh');
+            indicator.style.display = 'block';
             
             recommendations = [];
+            acceptedRecommendations.clear();
             const products = filteredProducts.slice(0, count);
-            const targetMargin = parseInt(document.getElementById('targetMargin').value) || 40;
             
             for (let i = 0; i < products.length; i++) {
                 const product = products[i];
-                const rec = await getSimpleRecommendation(product, targetMargin, apiKey);
-                recommendations.push({ product, rec, accepted: false });
+                const rec = await analyzePricing(product, targetMargin);
+                recommendations.push({ product, rec });
+                
                 resultsArea.innerHTML = `<div class="loading"><div class="spinner"></div><p>Analyzing ${i + 1}/${count}...</p></div>`;
             }
             
+            saveToCache(recommendations);
             displayResults();
         }
         
-        async function getSimpleRecommendation(product, targetMargin, apiKey) {
+        async function analyzePricing(product, targetMargin) {
             const currentMargin = ((product.retailPrice - product.wholesalePrice) / product.retailPrice * 100).toFixed(1);
+            const currentDate = new Date();
+            const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+            
+            // Calculate platform fees
+            const etsyFees = product.retailPrice * 0.065 + 0.20 + product.retailPrice * 0.03 + product.retailPrice * 0.05;
+            const wayfairFees = product.retailPrice * 0.15;
+            const wixFees = product.retailPrice * 0.029 + 0.30;
+            
+            const etsyMargin = ((product.retailPrice - product.wholesalePrice - etsyFees) / product.retailPrice * 100).toFixed(1);
+            const wayfairMargin = ((product.retailPrice - product.wholesalePrice - wayfairFees) / product.retailPrice * 100).toFixed(1);
+            const wixMargin = ((product.retailPrice - product.wholesalePrice - wixFees) / product.retailPrice * 100).toFixed(1);
+            
+            // Seasonal factors
+            const seasonalFactors = {
+                'January': 0.85, 'February': 0.90, 'March': 0.95,
+                'April': 1.05, 'May': 1.10, 'June': 1.05,
+                'July': 1.00, 'August': 0.95, 'September': 1.05,
+                'October': 1.15, 'November': 1.20, 'December': 1.25
+            };
+            const seasonalFactor = seasonalFactors[currentMonth] || 1.0;
+            
+            // Inventory velocity
+            const daysInStock = 90; // Placeholder
+            const velocity = product.qty / daysInStock;
+            const isDeadStock = product.qty > 50 && velocity < 0.5;
             
             const prompt = `Analyze pricing for: ${product.productName}
 SKU: ${product.sku}
-Current: $${product.retailPrice}
-Wholesale: $${product.wholesalePrice}
-Margin: ${currentMargin}%
-Target: ${targetMargin}%
 
-JSON only:
+CURRENT DATA:
+- Retail: $${product.retailPrice}
+- Wholesale: $${product.wholesalePrice}
+- Current Margin: ${currentMargin}%
+- Stock: ${product.qty} units
+- Season: ${currentMonth} (factor: ${seasonalFactor})
+- Inventory Velocity: ${velocity.toFixed(2)} units/day
+- Dead Stock: ${isDeadStock ? 'YES ⚠️' : 'No'}
+
+PLATFORM ANALYSIS:
+- Etsy: ${etsyMargin}% margin after fees
+- Wayfair: ${wayfairMargin}% margin after fees
+- Wix: ${wixMargin}% margin after fees
+
+TARGET: ${targetMargin}% minimum margin
+
+Provide JSON:
 {
   "recommendation": "increase/decrease/maintain",
   "suggestedRetailPrice": number,
-  "reasoning": "brief reason",
+  "reasoning": "2-3 sentences with platform, seasonal, and inventory insights",
   "priority": "high/medium/low",
-  "confidence": number
-}`;
-            
+  "expectedImpact": "brief impact statement",
+  "confidence": number (0-100),
+  "platformRecommendation": "which platform to focus on",
+  "seasonalStrategy": "brief seasonal pricing strategy",
+  "inventoryAction": "clear/maintain/restock"
+}
+
+ONLY JSON, no markdown.`;
+
             try {
                 const response = await fetch(WORKER_URL, {
                     method: "POST",
-                    headers: {
+                    headers: { 
                         "Content-Type": "application/json",
                         "x-api-key": apiKey,
                         "anthropic-version": "2023-06-01"
                     },
                     body: JSON.stringify({
                         model: "claude-sonnet-4-20250514",
-                        max_tokens: 500,
+                        max_tokens: 800,
                         messages: [{ role: "user", content: prompt }]
                     })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
                 const data = await response.json();
                 const text = data.content[0].text;
                 const jsonMatch = text.match(/\{[\s\S]*\}/);
-                return jsonMatch ? JSON.parse(jsonMatch[0]) : {
-                    recommendation: 'maintain',
-                    suggestedRetailPrice: product.retailPrice,
-                    reasoning: 'Unable to analyze',
-                    priority: 'low',
-                    confidence: 0
-                };
+                
+                if (jsonMatch) {
+                    const result = JSON.parse(jsonMatch[0]);
+                    // Add calculated data
+                    result.platformFees = { etsy: etsyMargin, wayfair: wayfairMargin, wix: wixMargin };
+                    result.seasonal = { month: currentMonth, factor: seasonalFactor };
+                    result.velocity = { rate: velocity.toFixed(2), isDeadStock };
+                    return result;
+                }
+                
+                throw new Error('Invalid JSON response');
+                
             } catch (error) {
                 return {
                     recommendation: 'error',
                     suggestedRetailPrice: product.retailPrice,
                     reasoning: 'Error: ' + error.message,
                     priority: 'low',
-                    confidence: 0
+                    expectedImpact: 'Error',
+                    confidence: 0,
+                    platformFees: { etsy: etsyMargin, wayfair: wayfairMargin, wix: wixMargin },
+                    seasonal: { month: currentMonth, factor: seasonalFactor },
+                    velocity: { rate: velocity.toFixed(2), isDeadStock }
                 };
             }
         }
         
-        // Display Results
         function displayResults() {
-            const resultsArea = document.getElementById('resultsArea');
+            if (recommendations.length === 0) {
+                document.getElementById('resultsArea').innerHTML = '<div class="panel"><p style="color: #94a3b8;">No results. Analyze products to see recommendations.</p></div>';
+                return;
+            }
+            
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            recommendations.sort((a, b) => priorityOrder[a.rec.priority] - priorityOrder[b.rec.priority]);
             
             let html = `
-                <div class="panel">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3>📊 Results (${recommendations.length} products)</h3>
-                        <div class="view-toggle">
-                            <button class="view-btn ${viewMode === 'list' ? 'active' : ''}" onclick="switchView('list')">📋 List</button>
-                            <button class="view-btn ${viewMode === 'card' ? 'active' : ''}" onclick="switchView('card')">📇 Cards</button>
+                <div class="list-table">
+                    <div class="list-header">
+                        <div><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></div>
+                        <div>SKU</div>
+                        <div>Product</div>
+                        <div>Current</div>
+                        <div>Recommended</div>
+                        <div>Change</div>
+                        <div>Priority</div>
+                        <div></div>
+                    </div>
+            `;
+            
+            recommendations.forEach((item, index) => {
+                const change = item.rec.suggestedRetailPrice - item.product.retailPrice;
+                const changeClass = change >= 0 ? 'positive' : 'negative';
+                const isAccepted = acceptedRecommendations.has(index);
+                
+                html += `
+                    <div class="list-row priority-${item.rec.priority}" id="row-${index}">
+                        <div><input type="checkbox" class="row-checkbox" data-index="${index}" onchange="updateBulkActions()"></div>
+                        <div>${item.product.sku}</div>
+                        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.product.productName}</div>
+                        <div>$${item.product.retailPrice.toFixed(2)}</div>
+                        <div>$${item.rec.suggestedRetailPrice.toFixed(2)}</div>
+                        <div class="price-change ${changeClass}">${change >= 0 ? '+' : ''}$${change.toFixed(2)}</div>
+                        <div><span class="priority-badge priority-${item.rec.priority}">${item.rec.priority}</span></div>
+                        <div class="expand-icon" onclick="toggleExpand(${index})">▶</div>
+                    </div>
+                    <div class="expanded-card" id="expanded-${index}">
+                        ${renderFullCard(item, index)}
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            
+            document.getElementById('resultsArea').innerHTML = html;
+        }
+        
+        function renderFullCard(item, index) {
+            const product = item.product;
+            const rec = item.rec;
+            const currentMargin = ((product.retailPrice - product.wholesalePrice) / product.retailPrice * 100).toFixed(1);
+            const newMargin = ((rec.suggestedRetailPrice - product.wholesalePrice) / rec.suggestedRetailPrice * 100).toFixed(1);
+            const priceChange = rec.suggestedRetailPrice - product.retailPrice;
+            
+            const currentPrice = product.retailPrice.toFixed(2);
+            const suggestedPrice = rec.suggestedRetailPrice.toFixed(2);
+            const currentEnding = currentPrice.split('.')[1];
+            const suggestedEnding = suggestedPrice.split('.')[1];
+            const isPsychOptimized = suggestedEnding === '99' || suggestedEnding === '95' || suggestedEnding === '97';
+            
+            let warnings = '';
+            if (rec.velocity.isDeadStock) {
+                warnings += `<div class="warning-banner">⚠️ Dead Stock Warning: ${product.qty} units, velocity ${rec.velocity.rate}/day - Consider clearance pricing</div>`;
+            }
+            
+            return `
+                <div class="card-header">
+                    <div class="product-info">
+                        <h4>${product.productName}</h4>
+                        <div class="sku">SKU: ${product.sku} | Stock: ${product.qty} units</div>
+                    </div>
+                    <span class="priority-badge priority-${rec.priority}">${rec.priority.toUpperCase()}</span>
+                </div>
+                
+                ${warnings}
+                
+                <div class="pricing-comparison">
+                    <div class="price-column">
+                        <h5>Current Pricing</h5>
+                        <div class="price-row">
+                            <span class="price-label">Retail:</span>
+                            <span class="price-value">$${product.retailPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Wholesale:</span>
+                            <span class="price-value">$${product.wholesalePrice.toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Margin:</span>
+                            <span class="price-value">${currentMargin}%</span>
                         </div>
                     </div>
                     
-                    <div class="bulk-actions">
-                        <span style="color: #94a3b8; font-size: 0.9rem; flex: 1;">
-                            ${acceptedRecommendations.size} selected
-                        </span>
-                        <button class="bulk-btn bulk-btn-accept" onclick="bulkAccept()">✅ Accept Selected</button>
-                        <button class="bulk-btn bulk-btn-reject" onclick="bulkReject()">❌ Reject Selected</button>
-                        <button class="bulk-btn bulk-btn-export" onclick="exportAccepted()">📊 Export Accepted</button>
-                        <button class="bulk-btn bulk-btn-future" title="Coming in future update">💾 Update JSON (Soon)</button>
+                    <div class="arrow">${rec.recommendation === 'increase' ? '↗' : rec.recommendation === 'decrease' ? '↘' : '→'}</div>
+                    
+                    <div class="price-column">
+                        <h5>Recommended Pricing</h5>
+                        <div class="price-row">
+                            <span class="price-label">Retail:</span>
+                            <span class="price-value">
+                                $${rec.suggestedRetailPrice.toFixed(2)}
+                                <span class="price-change ${priceChange < 0 ? 'negative' : ''}" style="font-size: 0.85rem; margin-left: 8px;">${priceChange >= 0 ? '+' : ''}$${priceChange.toFixed(2)}</span>
+                            </span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Wholesale:</span>
+                            <span class="price-value">$${product.wholesalePrice.toFixed(2)}</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">New Margin:</span>
+                            <span class="price-value">${newMargin}%</span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="list-view ${viewMode === 'list' ? 'active' : ''}">
-                    ${renderListView()}
+                <div class="analysis-section">
+                    <h5>💳 Platform Fee Analysis</h5>
+                    <div class="platform-fees-grid">
+                        <div class="platform-fee-box ${rec.platformFees.etsy > rec.platformFees.wayfair && rec.platformFees.etsy > rec.platformFees.wix ? 'best' : ''}">
+                            <div class="platform-name">Etsy</div>
+                            <div class="platform-margin">${rec.platformFees.etsy}%</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">margin after fees</div>
+                        </div>
+                        <div class="platform-fee-box ${rec.platformFees.wayfair > rec.platformFees.etsy && rec.platformFees.wayfair > rec.platformFees.wix ? 'best' : ''}">
+                            <div class="platform-name">Wayfair</div>
+                            <div class="platform-margin">${rec.platformFees.wayfair}%</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">margin after fees</div>
+                        </div>
+                        <div class="platform-fee-box ${rec.platformFees.wix > rec.platformFees.etsy && rec.platformFees.wix > rec.platformFees.wayfair ? 'best' : ''}">
+                            <div class="platform-name">Wix</div>
+                            <div class="platform-margin">${rec.platformFees.wix}%</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">margin after fees</div>
+                        </div>
+                    </div>
+                    ${rec.platformRecommendation ? `<p style="color: #cbd5e1; font-size: 0.9rem; margin-top: 12px;">📌 ${rec.platformRecommendation}</p>` : ''}
                 </div>
                 
-                <div class="card-view ${viewMode === 'card' ? 'active' : ''}">
-                    ${renderCardView()}
+                <div class="analysis-section">
+                    <h5>🗓️ Seasonal Intelligence</h5>
+                    <div class="seasonal-info">
+                        <div>
+                            <div style="color: #cbd5e1; font-size: 0.85rem;">Current Month</div>
+                            <div style="font-size: 1.1rem; font-weight: 700;">${rec.seasonal.month}</div>
+                        </div>
+                        <div>
+                            <div style="color: #cbd5e1; font-size: 0.85rem;">Demand Factor</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: ${rec.seasonal.factor > 1 ? '#10b981' : '#f59e0b'};">${rec.seasonal.factor}x</div>
+                        </div>
+                        <div>
+                            <div style="color: #cbd5e1; font-size: 0.85rem;">Status</div>
+                            <div style="font-size: 1.1rem; font-weight: 700;">${rec.seasonal.factor > 1.1 ? '🔥 High' : rec.seasonal.factor > 0.95 ? '📊 Normal' : '❄️ Low'}</div>
+                        </div>
+                    </div>
+                    ${rec.seasonalStrategy ? `<p style="color: #cbd5e1; font-size: 0.9rem;">💡 ${rec.seasonalStrategy}</p>` : ''}
+                </div>
+                
+                <div class="analysis-section">
+                    <h5>📦 Inventory Velocity</h5>
+                    ${rec.velocity.isDeadStock ? `
+                        <div class="velocity-warning">
+                            <span style="font-size: 1.5rem;">⚠️</span>
+                            <div>
+                                <div style="font-weight: 600; color: #fca5a5;">Dead Stock Detected</div>
+                                <div style="font-size: 0.85rem; color: #cbd5e1;">Velocity: ${rec.velocity.rate} units/day | Stock: ${product.qty} units</div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div style="padding: 12px; background: rgba(15, 23, 42, 0.6); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #cbd5e1;">Sales Velocity:</span>
+                            <span style="font-weight: 700;">${rec.velocity.rate} units/day</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #cbd5e1;">Current Stock:</span>
+                            <span style="font-weight: 700;">${product.qty} units</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #cbd5e1;">Recommended Action:</span>
+                            <span style="font-weight: 700; color: ${rec.inventoryAction === 'clear' ? '#ef4444' : '#10b981'};">${rec.inventoryAction?.toUpperCase() || 'MAINTAIN'}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-section">
+                    <h5>🧠 Psychological Pricing</h5>
+                    <div class="psych-pricing-grid">
+                        <div class="psych-box">
+                            <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">Current Price</div>
+                            <div style="font-size: 1.3rem; font-weight: 700;">$${currentPrice}</div>
+                            <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 4px;">Ends in .${currentEnding}</div>
+                        </div>
+                        <div class="psych-box ${isPsychOptimized ? 'optimized' : ''}">
+                            <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">Optimized Price</div>
+                            <div style="font-size: 1.3rem; font-weight: 700;">$${suggestedPrice}</div>
+                            <div style="font-size: 0.75rem; color: ${isPsychOptimized ? '#10b981' : '#cbd5e1'}; margin-top: 4px;">
+                                ${isPsychOptimized ? '✅ Optimized (.99/.95/.97)' : 'Ends in .' + suggestedEnding}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="insight-box">
+                    <h5>💡 AI Reasoning</h5>
+                    <p>${rec.reasoning}</p>
+                </div>
+                
+                <div class="insight-box" style="background: rgba(16, 185, 129, 0.1); border-color: #10b981;">
+                    <h5 style="color: #6ee7b7;">📈 Expected Impact</h5>
+                    <p>${rec.expectedImpact}</p>
+                </div>
+                
+                <div class="metrics-row">
+                    <div class="metric-small">
+                        <div class="value">${rec.recommendation.toUpperCase()}</div>
+                        <div class="label">Action</div>
+                    </div>
+                    <div class="metric-small">
+                        <div class="value">${rec.confidence}%</div>
+                        <div class="label">Confidence</div>
+                    </div>
+                    <div class="metric-small">
+                        <div class="value">$${Math.abs(priceChange).toFixed(2)}</div>
+                        <div class="label">Change</div>
+                    </div>
+                    <div class="metric-small">
+                        <div class="value">${(newMargin - currentMargin).toFixed(1)}%</div>
+                        <div class="label">Margin Δ</div>
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <button class="btn btn-accept" onclick="acceptSingle(${index})">✅ Accept</button>
+                    <button class="btn btn-modify" onclick="modifyPrice(${index})">✏️ Modify</button>
+                    <button class="btn btn-reject" onclick="rejectSingle(${index})">❌ Reject</button>
+                    <button class="btn btn-copy" onclick="copySingle(${index})">📋 Copy</button>
                 </div>
             `;
-            
-            resultsArea.innerHTML = html;
-        }
-        
-        function renderListView() {
-            let html = `
-                <div class="list-header">
-                    <div>☑️</div>
-                    <div>SKU</div>
-                    <div>Product</div>
-                    <div>Current</div>
-                    <div>Recommended</div>
-                    <div>Change</div>
-                    <div>Priority</div>
-                    <div>▶️</div>
-                </div>
-            `;
-            
-            recommendations.forEach((item, index) => {
-                const change = item.rec.suggestedRetailPrice - item.product.retailPrice;
-                const changeText = change >= 0 ? `+$${change.toFixed(2)}` : `-$${Math.abs(change).toFixed(2)}`;
-                const isAccepted = acceptedRecommendations.has(index);
-                
-                html += `
-                    <div class="list-item priority-${item.rec.priority}" id="list-item-${index}">
-                        <div><input type="checkbox" class="checkbox" ${isAccepted ? 'checked' : ''} onchange="toggleAccept(${index})"></div>
-                        <div style="font-family: monospace; font-size: 0.85rem;">${item.product.sku}</div>
-                        <div style="font-weight: 600;">${item.product.productName}</div>
-                        <div>$${item.product.retailPrice.toFixed(2)}</div>
-                        <div style="color: #10b981; font-weight: 600;">$${item.rec.suggestedRetailPrice.toFixed(2)}</div>
-                        <div style="color: ${change >= 0 ? '#10b981' : '#ef4444'};">${changeText}</div>
-                        <div><span style="padding: 4px 8px; background: rgba(${item.rec.priority === 'high' ? '239,68,68' : item.rec.priority === 'medium' ? '245,158,11' : '100,116,139'}, 0.2); border-radius: 4px; font-size: 0.75rem;">${item.rec.priority.toUpperCase()}</span></div>
-                        <div><span class="expand-icon" onclick="toggleExpand(${index})">▶</span></div>
-                    </div>
-                `;
-            });
-            
-            return html;
-        }
-        
-        function renderCardView() {
-            let html = '';
-            recommendations.forEach((item, index) => {
-                const change = item.rec.suggestedRetailPrice - item.product.retailPrice;
-                const isAccepted = acceptedRecommendations.has(index);
-                
-                html += `
-                    <div class="recommendation-card">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
-                            <div>
-                                <h4 style="font-size: 1.2rem; margin-bottom: 4px;">${item.product.productName}</h4>
-                                <p style="color: #94a3b8; font-size: 0.9rem;">SKU: ${item.product.sku}</p>
-                            </div>
-                            <input type="checkbox" class="checkbox" ${isAccepted ? 'checked' : ''} onchange="toggleAccept(${index})" style="width: 24px; height: 24px;">
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; margin-bottom: 16px; padding: 16px; background: rgba(15, 23, 42, 0.4); border-radius: 8px;">
-                            <div>
-                                <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 8px;">Current Price</div>
-                                <div style="font-size: 1.5rem; font-weight: 700;">$${item.product.retailPrice.toFixed(2)}</div>
-                            </div>
-                            <div style="font-size: 2rem; color: #6366f1;">${item.rec.recommendation === 'increase' ? '↗' : item.rec.recommendation === 'decrease' ? '↘' : '→'}</div>
-                            <div>
-                                <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 8px;">Recommended</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">$${item.rec.suggestedRetailPrice.toFixed(2)}</div>
-                                <div style="color: ${change >= 0 ? '#10b981' : '#ef4444'}; font-size: 0.9rem;">${change >= 0 ? '+' : ''}$${change.toFixed(2)}</div>
-                            </div>
-                        </div>
-                        
-                        <div style="padding: 12px; background: rgba(99, 102, 241, 0.1); border-left: 3px solid #6366f1; border-radius: 6px; margin-bottom: 16px;">
-                            <div style="color: #a5b4fc; font-weight: 600; margin-bottom: 4px;">💡 Reasoning</div>
-                            <div style="color: #cbd5e1;">${item.rec.reasoning}</div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button class="btn btn-accept" onclick="acceptSingle(${index})">✅ Accept</button>
-                            <button class="btn btn-modify" onclick="modifyPrice(${index})">✏️ Modify</button>
-                            <button class="btn btn-reject" onclick="rejectSingle(${index})">❌ Reject</button>
-                            <button class="btn btn-copy" onclick="copySingle(${index})">📋 Copy</button>
-                        </div>
-                    </div>
-                `;
-            });
-            return html;
-        }
-        
-        // View Switching
-        function switchView(mode) {
-            viewMode = mode;
-            displayResults();
         }
         
         function toggleExpand(index) {
-            const item = document.getElementById(`list-item-${index}`);
-            if (item.classList.contains('expanded')) {
-                item.classList.remove('expanded');
-                item.innerHTML = renderListItem(index);
-            } else {
-                item.classList.add('expanded');
-                item.innerHTML = renderExpandedItem(index);
-            }
-        }
-        
-        function renderListItem(index) {
-            const item = recommendations[index];
-            const change = item.rec.suggestedRetailPrice - item.product.retailPrice;
-            const changeText = change >= 0 ? `+$${change.toFixed(2)}` : `-$${Math.abs(change).toFixed(2)}`;
-            const isAccepted = acceptedRecommendations.has(index);
+            const expanded = document.getElementById(`expanded-${index}`);
+            const icon = document.querySelector(`#row-${index} .expand-icon`);
             
-            return `
-                <div><input type="checkbox" class="checkbox" ${isAccepted ? 'checked' : ''} onchange="toggleAccept(${index})"></div>
-                <div style="font-family: monospace; font-size: 0.85rem;">${item.product.sku}</div>
-                <div style="font-weight: 600;">${item.product.productName}</div>
-                <div>$${item.product.retailPrice.toFixed(2)}</div>
-                <div style="color: #10b981; font-weight: 600;">$${item.rec.suggestedRetailPrice.toFixed(2)}</div>
-                <div style="color: ${change >= 0 ? '#10b981' : '#ef4444'};">${changeText}</div>
-                <div><span style="padding: 4px 8px; background: rgba(${item.rec.priority === 'high' ? '239,68,68' : item.rec.priority === 'medium' ? '245,158,11' : '100,116,139'}, 0.2); border-radius: 4px; font-size: 0.75rem;">${item.rec.priority.toUpperCase()}</span></div>
-                <div><span class="expand-icon" onclick="toggleExpand(${index})">▶</span></div>
-            `;
-        }
-        
-        function renderExpandedItem(index) {
-            const item = recommendations[index];
-            return `
-                <div style="padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
-                        <h4>${item.product.productName}</h4>
-                        <span class="expand-icon" onclick="toggleExpand(${index})" style="cursor: pointer;">▼</span>
-                    </div>
-                    <div style="padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 6px; margin-bottom: 12px;">
-                        <strong>Reasoning:</strong> ${item.rec.reasoning}
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-accept" onclick="acceptSingle(${index})">✅ Accept</button>
-                        <button class="btn btn-modify" onclick="modifyPrice(${index})">✏️ Modify</button>
-                        <button class="btn btn-reject" onclick="rejectSingle(${index})">❌ Reject</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Actions
-        function toggleAccept(index) {
-            if (acceptedRecommendations.has(index)) {
-                acceptedRecommendations.delete(index);
+            if (expanded.classList.contains('active')) {
+                expanded.classList.remove('active');
+                icon.textContent = '▶';
             } else {
-                acceptedRecommendations.add(index);
+                // Close all others
+                document.querySelectorAll('.expanded-card').forEach(card => card.classList.remove('active'));
+                document.querySelectorAll('.expand-icon').forEach(i => i.textContent = '▶');
+                
+                expanded.classList.add('active');
+                icon.textContent = '▼';
             }
-            displayResults();
+        }
+        
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            const selectAll = document.getElementById('selectAll').checked;
+            checkboxes.forEach(cb => cb.checked = selectAll);
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            const bulkActions = document.getElementById('bulkActions');
+            const count = document.getElementById('selectedCount');
+            
+            if (checked.length > 0) {
+                bulkActions.classList.add('active');
+                count.textContent = `${checked.length} selected`;
+            } else {
+                bulkActions.classList.remove('active');
+            }
         }
         
         function acceptSingle(index) {
             acceptedRecommendations.add(index);
-            alert('✅ Recommendation accepted!');
-            displayResults();
+            saveToCache(recommendations);
+            alert(`✅ Accepted recommendation for ${recommendations[index].product.sku}`);
         }
         
         function rejectSingle(index) {
-            acceptedRecommendations.delete(index);
-            alert('❌ Recommendation rejected');
-            displayResults();
+            if (confirm('Remove this recommendation?')) {
+                recommendations.splice(index, 1);
+                saveToCache(recommendations);
+                displayResults();
+            }
         }
         
         function modifyPrice(index) {
             const item = recommendations[index];
-            const newPrice = prompt(`Modify price for ${item.product.productName}:`, item.rec.suggestedRetailPrice);
+            const newPrice = prompt(`Enter new price for ${item.product.productName}:`, item.rec.suggestedRetailPrice);
             if (newPrice && !isNaN(newPrice)) {
                 item.rec.suggestedRetailPrice = parseFloat(newPrice);
-                item.rec.reasoning = 'Manually modified by user';
+                saveToCache(recommendations);
                 displayResults();
             }
         }
         
         function copySingle(index) {
             const item = recommendations[index];
-            const text = `${item.product.sku}: $${item.product.retailPrice} → $${item.rec.suggestedRetailPrice}`;
+            const text = `${item.product.sku}\nProduct: ${item.product.productName}\nCurrent: $${item.product.retailPrice}\nRecommended: $${item.rec.suggestedRetailPrice}\nReasoning: ${item.rec.reasoning}`;
             navigator.clipboard.writeText(text);
-            alert('📋 Copied!');
+            alert('Copied to clipboard!');
         }
         
         function bulkAccept() {
-            if (acceptedRecommendations.size === 0) {
-                alert('Select items first (check boxes)');
-                return;
-            }
-            alert(`✅ Accepted ${acceptedRecommendations.size} recommendations`);
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            checked.forEach(cb => {
+                const index = parseInt(cb.dataset.index);
+                acceptedRecommendations.add(index);
+            });
+            saveToCache(recommendations);
+            alert(`✅ Accepted ${checked.length} recommendations`);
         }
         
         function bulkReject() {
-            if (acceptedRecommendations.size === 0) {
-                alert('Select items first');
-                return;
-            }
-            if (confirm(`Reject ${acceptedRecommendations.size} items?`)) {
-                acceptedRecommendations.clear();
-                displayResults();
-            }
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            if (!confirm(`Remove ${checked.length} recommendations?`)) return;
+            
+            const indices = Array.from(checked).map(cb => parseInt(cb.dataset.index)).sort((a, b) => b - a);
+            indices.forEach(i => recommendations.splice(i, 1));
+            
+            saveToCache(recommendations);
+            displayResults();
         }
         
         function exportAccepted() {
-            if (acceptedRecommendations.size === 0) {
-                alert('⚠️ No accepted recommendations to export.\n\nCheck the boxes next to items you want to export.');
+            const accepted = recommendations.filter((_, i) => acceptedRecommendations.has(i));
+            
+            if (accepted.length === 0) {
+                alert('No accepted recommendations to export');
                 return;
             }
             
             let csv = 'SKU,Product,Current_Price,Recommended_Price,Change,Priority,Confidence,Reasoning,Action\n';
-            
-            acceptedRecommendations.forEach(index => {
-                const item = recommendations[index];
+            accepted.forEach(item => {
                 const change = (item.rec.suggestedRetailPrice - item.product.retailPrice).toFixed(2);
-                const reasoning = item.rec.reasoning.replace(/"/g, '""');
-                
-                csv += `"${item.product.sku}","${item.product.productName}",${item.product.retailPrice},${item.rec.suggestedRetailPrice},${change},${item.rec.priority},${item.rec.confidence},"${reasoning}",ACCEPTED\n`;
+                csv += `"${item.product.sku}","${item.product.productName}",${item.product.retailPrice},${item.rec.suggestedRetailPrice},${change},${item.rec.priority.toUpperCase()},${item.rec.confidence},"${item.rec.reasoning}",ACCEPTED\n`;
             });
             
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `pricing-recommendations-${Date.now()}.csv`;
+            a.download = `pricing-accepted-${Date.now()}.csv`;
             a.click();
-            
-            alert(`✅ Exported ${acceptedRecommendations.size} recommendations to CSV!`);
         }
     </script>
 </body>
