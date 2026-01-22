@@ -860,9 +860,37 @@
                 masterData = JSON.parse(contents);
                 
                 if (!masterData?.inventory?.length) {
-                    alert('Invalid file format.');
+                    alert('Invalid file format: No inventory data found.');
                     return;
                 }
+                
+                // Debug: Log first product to verify data structure
+                console.log('=== MASTER.JSON DATA VERIFICATION ===');
+                console.log('Total products loaded:', masterData.inventory.length);
+                console.log('Sample product (first):', {
+                    sku: masterData.inventory[0].sku,
+                    name: masterData.inventory[0].productName,
+                    wholesale: masterData.inventory[0].wholesalePrice,
+                    retail: masterData.inventory[0].retailPrice,
+                    qty: masterData.inventory[0].qty
+                });
+                
+                // Check for SKU 90969 specifically
+                const sku90969 = masterData.inventory.find(p => p.sku === '90969');
+                if (sku90969) {
+                    console.log('SKU 90969 data:', {
+                        name: sku90969.productName,
+                        wholesale: sku90969.wholesalePrice,
+                        retail: sku90969.retailPrice,
+                        qty: sku90969.qty
+                    });
+                    console.log('✅ Expected retail for 90969: $26.25');
+                    if (sku90969.retailPrice !== 26.25) {
+                        console.warn('⚠️ WARNING: SKU 90969 retail price is', sku90969.retailPrice, 'but should be $26.25');
+                        console.warn('Your MASTER.json file may be outdated. Re-export from Inventory System.');
+                    }
+                }
+                console.log('=====================================');
                 
                 document.getElementById('fileStatus').textContent = 
                     `✅ Connected - ${masterData.inventory.length} products`;
