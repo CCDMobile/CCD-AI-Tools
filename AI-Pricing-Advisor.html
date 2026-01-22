@@ -630,6 +630,12 @@
                 <span class="cache-indicator" id="cacheIndicator" style="display: none;"></span>
             </h1>
             <p style="color: #94a3b8; margin-top: 8px;">AI-powered pricing with platform fee analysis, seasonal intelligence, and inventory velocity tracking</p>
+            <div style="margin-top: 12px;">
+                <button onclick="clearCache()" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+                    🗑️ Clear Cache
+                </button>
+                <span style="color: #64748b; font-size: 0.85rem; margin-left: 8px;">Use if quota exceeded or seeing wrong results</span>
+            </div>
         </div>
         
         <div class="main-layout">
@@ -802,13 +808,48 @@
         }
         
         function saveToCache(data) {
-            const cacheData = {
-                data: data,
-                timestamp: Date.now(),
-                count: data.length,
-                accepted: Array.from(acceptedRecommendations)
-            };
-            localStorage.setItem('pricing_cache', JSON.stringify(cacheData));
+            try {
+                const cacheData = {
+                    data: data,
+                    timestamp: Date.now(),
+                    count: data.length,
+                    accepted: Array.from(acceptedRecommendations)
+                };
+                
+                const jsonString = JSON.stringify(cacheData);
+                const sizeInMB = (jsonString.length / (1024 * 1024)).toFixed(2);
+                
+                console.log(`💾 Cache size: ${sizeInMB}MB`);
+                
+                // If cache is getting large (>4MB), warn and clear old
+                if (sizeInMB > 4) {
+                    console.warn(`⚠️ Cache is large (${sizeInMB}MB) - clearing old data to prevent quota errors`);
+                    localStorage.removeItem('pricing_cache');
+                }
+                
+                localStorage.setItem('pricing_cache', jsonString);
+                console.log('✅ Pricing data cached successfully');
+            } catch (error) {
+                if (error.name === 'QuotaExceededError') {
+                    console.warn('⚠️ localStorage quota exceeded - clearing old cache and retrying...');
+                    localStorage.removeItem('pricing_cache');
+                    try {
+                        const cacheData = {
+                            data: data,
+                            timestamp: Date.now(),
+                            count: data.length,
+                            accepted: Array.from(acceptedRecommendations)
+                        };
+                        localStorage.setItem('pricing_cache', JSON.stringify(cacheData));
+                        console.log('✅ Pricing data cached after clearing old data');
+                    } catch (retryError) {
+                        console.warn('⚠️ Still cannot cache - continuing without cache');
+                        console.warn('Results are displayed but will not persist on refresh.');
+                    }
+                } else {
+                    console.error('Cache save error:', error);
+                }
+            }
         }
         
         function loadFromCache() {
@@ -847,6 +888,16 @@
             document.getElementById('resultsArea').innerHTML = '';
             document.getElementById('cacheIndicator').style.display = 'none';
             alert('✅ Cache cleared! Analyze products to get fresh results.');
+        }
+        
+        function clearCache() {
+            localStorage.removeItem('pricing_cache');
+            document.getElementById('cacheIndicator').style.display = 'none';
+            document.getElementById('resultsArea').innerHTML = '';
+            recommendations = [];
+            acceptedRecommendations.clear();
+            console.log('✅ Pricing cache cleared successfully');
+            alert('✅ Cache cleared! Analyze products to see fresh results.');
         }
         
         async function connectFile() {
@@ -962,16 +1013,48 @@
             acceptedRecommendations.clear();
             const products = filteredProducts.slice(0, count);
             
-            for (let i = 0; i < products.length; i++) {
-                const product = products[i];
+            console.log('\n=== PRICING ANALYSIS DEBUG ===');
+            console.log(`Analyzing ${count} products in parallel...`);
+            console.log('==================================\n');
+            
+            const startTime = Date.now();
+            
+            // PARALLEL ANALYSIS - All products at once!
+            const promises = products.map(async (product, index) => {
+                console.log(`⏳ Starting analysis for SKU ${product.sku}...`);
                 const rec = await analyzePricing(product, targetMargin);
-                recommendations.push({ product, rec });
+                console.log(`✅ SKU ${product.sku} complete`);
                 
-                resultsArea.innerHTML = `<div class="loading"><div class="spinner"></div><p>Analyzing ${i + 1}/${count}...</p></div>`;
-            }
+                // Progressive display - show results as they come in
+                recommendations.push({ product, rec });
+                if (recommendations.length === 1) {
+                    // Show first result immediately
+                    displayResults();
+                } else if (recommendations.length % 3 === 0 || recommendations.length === products.length) {
+                    // Update every 3 products or at the end
+                    displayResults();
+                }
+                
+                resultsArea.innerHTML = `<div class="loading"><div class="spinner"></div><p>Analyzed ${recommendations.length}/${count} products...</p></div>`;
+                
+                return { product, rec };
+            });
+            
+            await Promise.all(promises);
+            
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`\n⚡ All ${count} products analyzed in ${elapsed}s (parallel)`);
+            console.log('✅ ANALYSIS COMPLETE!\n');
+            
+            // Sort by priority after all complete
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            recommendations.sort((a, b) => priorityOrder[a.rec.priority] - priorityOrder[b.rec.priority]);
             
             saveToCache(recommendations);
             displayResults();
+            
+            // Clear loading message
+            resultsArea.innerHTML = '';
         }
         
         async function analyzePricing(product, targetMargin) {
