@@ -697,6 +697,10 @@
         let filteredProducts = [];
         let generatedContent = [];
         
+        // 🔧 CLOUDFLARE WORKER CONFIGURATION
+        // Your Cloudflare Worker URL
+        const WORKER_URL = 'https://cold-field-4bb6.psmith-925.workers.dev/';
+        
         // API Key Management
         function saveApiKey() {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
@@ -985,7 +989,12 @@
             let prompt = buildEnhancedPrompt(product, channel, options);
             
             try {
-                const response = await fetch("https://api.anthropic.com/v1/messages", {
+                // Check if Worker URL is configured
+                if (WORKER_URL === 'YOUR_WORKER_URL_HERE') {
+                    throw new Error('Please configure your Cloudflare Worker URL in the code. See setup instructions.');
+                }
+                
+                const response = await fetch(WORKER_URL, {
                     method: "POST",
                     headers: { 
                         "Content-Type": "application/json",
