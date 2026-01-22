@@ -233,6 +233,141 @@
             white-space: nowrap;
         }
         
+        .competitor-section {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .competitor-section h5 {
+            color: #a5b4fc;
+            margin-bottom: 12px;
+        }
+        
+        .competitor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        
+        .competitor-table th,
+        .competitor-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        .competitor-table th {
+            color: #cbd5e1;
+            font-size: 0.85rem;
+        }
+        
+        .competitor-table td {
+            color: #f1f5f9;
+        }
+        
+        .add-competitor-btn {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-content h3 {
+            color: #c4b5fd;
+            margin-bottom: 20px;
+        }
+        
+        .modal-content input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #f1f5f9;
+            margin-bottom: 12px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .market-position {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .position-bar {
+            position: relative;
+            height: 40px;
+            background: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        
+        .position-marker {
+            position: absolute;
+            top: -8px;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 56px;
+            background: #f1f5f9;
+            border-radius: 2px;
+        }
+        
+        .position-label {
+            position: absolute;
+            top: -28px;
+            transform: translateX(-50%);
+            color: #f1f5f9;
+            font-weight: 700;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        
+        .position-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+        
         .remove-btn {
             background: #ef4444;
             color: white;
@@ -730,6 +865,20 @@
         </div>
     </div>
     
+    <!-- Competitor Modal -->
+    <div class="modal" id="competitorModal">
+        <div class="modal-content">
+            <h3>Add Competitor Price</h3>
+            <input type="text" id="compName" placeholder="Competitor name (e.g., Etsy - RusticHomeShop)">
+            <input type="number" id="compPrice" placeholder="Price" step="0.01">
+            <input type="text" id="compURL" placeholder="URL (optional)">
+            <div class="modal-actions">
+                <button class="btn btn-accept" onclick="saveCompetitor()">Add</button>
+                <button class="btn btn-reject" onclick="closeCompetitorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         let masterData = null;
         let fileHandle = null;
@@ -737,6 +886,8 @@
         let recommendations = [];
         let acceptedRecommendations = new Set();
         let globalCompetitors = [];
+        let competitorData = {}; // Store by SKU for per-product tracking
+        let currentProductIndex = null; // For modal
         let apiKey = '';
         const WORKER_URL = 'https://cold-field-4bb6.psmith-925.workers.dev/';
         
@@ -744,6 +895,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadApiKey();
             loadGlobalCompetitors();
+            loadCompetitorData();
             loadFromCache();
         });
         
@@ -900,6 +1052,94 @@
             alert('✅ Cache cleared! Analyze products to see fresh results.');
         }
         
+        function openCompetitorModal(index) {
+            currentProductIndex = index;
+            document.getElementById('competitorModal').classList.add('active');
+        }
+        
+        function closeCompetitorModal() {
+            document.getElementById('competitorModal').classList.remove('active');
+            document.getElementById('compName').value = '';
+            document.getElementById('compPrice').value = '';
+            document.getElementById('compURL').value = '';
+        }
+        
+        function saveCompetitor() {
+            const name = document.getElementById('compName').value.trim();
+            const price = parseFloat(document.getElementById('compPrice').value);
+            const url = document.getElementById('compURL').value.trim();
+            
+            if (!name || !price || price <= 0) {
+                alert('Please enter valid competitor name and price.');
+                return;
+            }
+            
+            const product = recommendations[currentProductIndex].product;
+            if (!competitorData[product.sku]) {
+                competitorData[product.sku] = [];
+            }
+            
+            competitorData[product.sku].push({ name, price, url });
+            closeCompetitorModal();
+            
+            // Save to localStorage
+            localStorage.setItem('competitor_data', JSON.stringify(competitorData));
+            
+            // Re-analyze just this product with new competitor data
+            console.log(`🔄 Re-analyzing SKU ${product.sku} with new competitor data...`);
+            reanalyzeSingleProduct(currentProductIndex);
+        }
+        
+        function removeCompetitor(sku, compIndex) {
+            if (competitorData[sku]) {
+                competitorData[sku].splice(compIndex, 1);
+                localStorage.setItem('competitor_data', JSON.stringify(competitorData));
+                
+                // Find product index and re-analyze
+                const productIndex = recommendations.findIndex(r => r.product.sku === sku);
+                if (productIndex !== -1) {
+                    reanalyzeSingleProduct(productIndex);
+                }
+            }
+        }
+        
+        async function reanalyzeSingleProduct(index) {
+            const item = recommendations[index];
+            const targetMargin = parseInt(document.getElementById('targetMargin').value) || 40;
+            const competitors = competitorData[item.product.sku] || [];
+            
+            // Show loading indicator
+            const card = document.querySelector(`#recommendation-card-${index}`);
+            if (card) {
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
+            }
+            
+            // Analyze with new competitor data
+            const rec = await analyzePricing(item.product, targetMargin, competitors);
+            
+            // Update recommendation
+            recommendations[index] = { product: item.product, rec, competitors };
+            
+            // Re-display
+            displayResults();
+            
+            console.log(`✅ SKU ${item.product.sku} re-analyzed with ${competitors.length} competitors`);
+        }
+        
+        function loadCompetitorData() {
+            const saved = localStorage.getItem('competitor_data');
+            if (saved) {
+                try {
+                    competitorData = JSON.parse(saved);
+                    console.log('📊 Loaded competitor data for', Object.keys(competitorData).length, 'products');
+                } catch (error) {
+                    console.error('Error loading competitor data:', error);
+                    competitorData = {};
+                }
+            }
+        }
+        
         async function connectFile() {
             try {
                 [fileHandle] = await window.showOpenFilePicker({
@@ -1019,14 +1259,21 @@
             
             const startTime = Date.now();
             
+            // Load saved competitor data
+            loadCompetitorData();
+            
             // PARALLEL ANALYSIS - All products at once!
             const promises = products.map(async (product, index) => {
                 console.log(`⏳ Starting analysis for SKU ${product.sku}...`);
-                const rec = await analyzePricing(product, targetMargin);
+                const competitors = competitorData[product.sku] || [];
+                if (competitors.length > 0) {
+                    console.log(`  📊 Using ${competitors.length} competitor prices for SKU ${product.sku}`);
+                }
+                const rec = await analyzePricing(product, targetMargin, competitors);
                 console.log(`✅ SKU ${product.sku} complete`);
                 
                 // Progressive display - show results as they come in
-                recommendations.push({ product, rec });
+                recommendations.push({ product, rec, competitors });
                 if (recommendations.length === 1) {
                     // Show first result immediately
                     displayResults();
@@ -1037,7 +1284,7 @@
                 
                 resultsArea.innerHTML = `<div class="loading"><div class="spinner"></div><p>Analyzed ${recommendations.length}/${count} products...</p></div>`;
                 
-                return { product, rec };
+                return { product, rec, competitors };
             });
             
             await Promise.all(promises);
@@ -1057,7 +1304,7 @@
             resultsArea.innerHTML = '';
         }
         
-        async function analyzePricing(product, targetMargin) {
+        async function analyzePricing(product, targetMargin, competitors = []) {
             const currentMargin = ((product.retailPrice - product.wholesalePrice) / product.retailPrice * 100).toFixed(1);
             const currentDate = new Date();
             const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
@@ -1085,6 +1332,23 @@
             const velocity = product.qty / daysInStock;
             const isDeadStock = product.qty > 50 && velocity < 0.5;
             
+            // Competitor context
+            let competitorContext = '';
+            if (competitors.length > 0) {
+                const prices = competitors.map(c => c.price);
+                const avgCompPrice = (prices.reduce((a,b) => a+b, 0) / prices.length).toFixed(2);
+                const minCompPrice = Math.min(...prices).toFixed(2);
+                const maxCompPrice = Math.max(...prices).toFixed(2);
+                
+                competitorContext = `
+COMPETITOR PRICES (${competitors.length} tracked):
+- Lowest: $${minCompPrice}
+- Highest: $${maxCompPrice}
+- Average: $${avgCompPrice}
+- Your price vs avg: ${((product.retailPrice / avgCompPrice - 1) * 100).toFixed(1)}%
+- Sources: ${competitors.map(c => c.name).join(', ')}`;
+            }
+            
             const prompt = `Analyze pricing for: ${product.productName}
 SKU: ${product.sku}
 
@@ -1096,6 +1360,7 @@ CURRENT DATA:
 - Season: ${currentMonth} (factor: ${seasonalFactor})
 - Inventory Velocity: ${velocity.toFixed(2)} units/day
 - Dead Stock: ${isDeadStock ? 'YES ⚠️' : 'No'}
+${competitorContext}
 
 PLATFORM ANALYSIS:
 - Etsy: ${etsyMargin}% margin after fees
@@ -1108,13 +1373,13 @@ Provide JSON:
 {
   "recommendation": "increase/decrease/maintain",
   "suggestedRetailPrice": number,
-  "reasoning": "2-3 sentences with platform, seasonal, and inventory insights",
+  "reasoning": "2-3 sentences with platform, seasonal, inventory${competitors.length > 0 ? ', and competitor' : ''} insights",
   "priority": "high/medium/low",
   "expectedImpact": "brief impact statement",
   "confidence": number (0-100),
   "platformRecommendation": "which platform to focus on",
   "seasonalStrategy": "brief seasonal pricing strategy",
-  "inventoryAction": "clear/maintain/restock"
+  "inventoryAction": "clear/maintain/restock"${competitors.length > 0 ? ',\n  "marketPosition": "below/at/above market average"' : ''}
 }
 
 ONLY JSON, no markdown.`;
@@ -1208,7 +1473,9 @@ ONLY JSON, no markdown.`;
                         <div class="expand-icon" onclick="toggleExpand(${index})">▶</div>
                     </div>
                     <div class="expanded-card" id="expanded-${index}">
-                        ${renderFullCard(item, index)}
+                        <div id="recommendation-card-${index}">
+                            ${renderFullCard(item, index)}
+                        </div>
                     </div>
                 `;
             });
@@ -1285,6 +1552,66 @@ ONLY JSON, no markdown.`;
                         </div>
                     </div>
                 </div>
+                
+                ${item.competitors && item.competitors.length > 0 ? `
+                <div class="competitor-section">
+                    <h5>💰 Competitor Prices</h5>
+                    <table class="competitor-table">
+                        <thead>
+                            <tr>
+                                <th>Competitor</th>
+                                <th>Price</th>
+                                <th>Link</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${item.competitors.map((c, i) => `
+                                <tr>
+                                    <td>${c.name}</td>
+                                    <td>$${c.price.toFixed(2)}</td>
+                                    <td>${c.url ? `<a href="${c.url}" target="_blank" style="color: #a5b4fc;">View</a>` : '-'}</td>
+                                    <td><button class="btn-reject" style="padding: 4px 8px; font-size: 0.8rem;" onclick="removeCompetitor('${product.sku}', ${i})">×</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <button class="add-competitor-btn" onclick="openCompetitorModal(${index})">+ Add Competitor</button>
+                    
+                    ${(() => {
+                        const prices = item.competitors.map(c => c.price);
+                        const avgPrice = prices.reduce((a,b) => a+b, 0) / prices.length;
+                        const minPrice = Math.min(...prices);
+                        const maxPrice = Math.max(...prices);
+                        const yourPosition = ((product.retailPrice - minPrice) / (maxPrice - minPrice)) * 100;
+                        
+                        return `
+                        <div class="market-position">
+                            <h5 style="color: #cbd5e1; margin-bottom: 8px;">Market Position</h5>
+                            <div class="position-bar">
+                                <div class="position-marker" style="left: ${yourPosition}%;">
+                                    <div class="position-label">YOU</div>
+                                </div>
+                            </div>
+                            <div class="position-legend">
+                                <span>Low: $${minPrice.toFixed(2)}</span>
+                                <span>Avg: $${avgPrice.toFixed(2)}</span>
+                                <span>High: $${maxPrice.toFixed(2)}</span>
+                            </div>
+                            <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 12px;">
+                                ${product.retailPrice < avgPrice ? '📉 Below average - room to increase' : product.retailPrice > avgPrice ? '⚠️ Above average - may lose sales' : '✅ At market average'}
+                            </p>
+                        </div>
+                        `;
+                    })()}
+                </div>
+                ` : `
+                <div class="competitor-section">
+                    <h5>💰 Competitor Prices</h5>
+                    <p style="color: #94a3b8; margin-bottom: 12px;">No competitor data yet. Add competitors to see market positioning.</p>
+                    <button class="add-competitor-btn" onclick="openCompetitorModal(${index})">+ Add Competitor</button>
+                </div>
+                `}
                 
                 <div class="analysis-section">
                     <h5>💳 Platform Fee Analysis</h5>
